@@ -6,7 +6,7 @@
 ## Team Members
 
 | Name                 | Roll Number     |
-| -------------------- | --------------- |
+| -------------------- | :-------------: |
 | Akula Rajesh         | M25AI1048       |
 | Pradeep Annepu       | M25AI1109       |
 | Anirudh Reddy Aligireddy | M25AI1131 |
@@ -35,44 +35,112 @@ It converts the raw outputs into a probability distribution over the 10 classes,
 
 The network is trained using the Adam optimizer, a popular adaptive learning rate optimization algorithm. The sparse categorical cross-entropy loss function is employed, suitable for multi-class classification with integer labels. Model performance is evaluated using accuracy as the primary metric.
 
-## 3. Implementation Approaches and Speed-Up Analysis
+---
 
-To understand performance, two implementations were considered:
+## 3. Dataset Description – MNIST
 
-### 3.1 Optimized Framework Implementation (Keras/TensorFlow on CPU)
+The **MNIST** (Modified National Institute of Standards and Technology) dataset is a standard benchmark for handwritten-digit classification.  
+It contains grayscale images of digits **0 to 9**, each of size **28×28 pixels**.  
+For training efficiency, every image is **flattened to 784 features** and **normalized to [0, 1]**.
 
-This represents a highly optimized "standard" approach, utilizing the TensorFlow backend which leverages efficient C/C++ libraries and BLAS (Basic Linear Algebra Subprograms) for numerical operations.
 
-### 3.2 From-Scratch NumPy Implementation
+<div align="center">
+  
+| Property | Description |
+|:---------:|-------------|
+| Total Samples | 60,000 train + 10,000 test |
+| Classes | 10 (Digits 0–9) |
+| Image Size | 28×28 (784 features after flattening) |
+| Type | Multi-class classification |
+| Normalization | Pixel values scaled to [0, 1] |
 
-A manual implementation of the forward and backward propagation steps using only the NumPy library for array operations. This provides a baseline to observe the performance benefits of optimized frameworks.
+</div>
 
-### Benchmarking Results (Illustrative)
+These preprocessing steps are exactly what our **NumPy**, **Keras**, and **CuPy** implementations perform before model training.
 
-**Note**: Due to limitations in the current execution environment, direct live benchmarking was not possible. The following figures represent typical performance differences observed in such comparisons.
+---
 
-| Implementation Method  | Training Time (5 Epochs, Batch Size 64) | Test Accuracy (Illustrative) |
-| ---------------------- | --------------------------------------- | ---------------------------- |
-| Keras/TensorFlow (CPU) | Approximately 10-15 seconds             | ~97-98%                      |
-| From-Scratch NumPy     | Approximately 150-250 seconds           | ~90-95%                      |
+## 4. Implementation Approaches and Performance Analysis
 
-### Speed-Up Analysis
+To analyze speed and accuracy trade-offs, we implemented the same network in three ways:
 
-The Keras/TensorFlow implementation typically achieves a significant speed-up over the from-scratch NumPy implementation.
+### 4.1 Optimized Framework Implementation (Keras/TensorFlow on CPU)
+- Built using the **TensorFlow Keras Sequential API**.  
+- Uses highly optimized C/C++ and BLAS backends.  
+- Trained with **Adam optimizer** for faster convergence.  
+- Serves as the **optimized CPU reference implementation**.
 
-**Illustrative Speed-Up**: Approximately 15-20x
+### 4.2 From-Scratch NumPy Implementation (CPU)
+- Manual forward and backward propagation using NumPy matrix operations.  
+- Trained with **SGD** and fixed learning rate.  
+- Provides a **baseline** for understanding computational cost on CPU.
 
-This substantial speed advantage of Keras/TensorFlow (or other deep learning frameworks like PyTorch) over a pure Python/NumPy implementation is primarily due to several factors:
+### 4.3 From-Scratch CuPy Implementation (GPU)
+- GPU-accelerated version of the NumPy model using **CuPy arrays and CUDA**.  
+- All matrix multiplications, activations, and gradients run on GPU.  
+- TensorFlow was pinned to CPU to avoid GPU conflicts.  
+- Executed on **NVIDIA T4 GPU** in Google Colab.
 
-• **Optimized Backends**: Frameworks are built on highly optimized C/C++ (and often CUDA for GPUs) engines, which are significantly faster than Python for numerical computations.
+---
 
-• **BLAS Libraries**: They link to highly optimized BLAS libraries (e.g., Intel MKL, OpenBLAS) for linear algebra operations like matrix multiplication, which are heavily used in neural networks. These libraries are often hand-tuned for specific CPU architectures and utilize techniques like vectorization and multi-threading.
+## 5. Experimental Setup
+<div align="center">
+  
+| Parameter | Value |
+|:---------:|--------|
+| Dataset | MNIST |
+| Epochs | 10 |
+| Batch Size | 128 |
+| Learning Rate | 0.01 |
+| Optimizer | SGD (NumPy/CuPy), Adam (Keras) |
+| Hidden Layer | 128 neurons with ReLU |
+| Hardware | Intel Xeon CPU + NVIDIA T4 GPU (Colab) |
 
-• **Graph Optimization**: TensorFlow constructs a computational graph that can be optimized for efficiency before execution, including memory management and operation fusion.
+</div>
 
-• **Reduced Python Overhead**: By performing large chunks of computation in compiled code, frameworks minimize the overhead of Python's interpreter.
+---
 
-## 4. Conclusion
+## 6. Measured Results
+<div align="center">
+
+<!-- cells centered with :---: -->
+  
+| Implementation | Training Time (s) | Test Accuracy |
+|:--------------:|:-----------------:|:-------------:|
+| CuPy (GPU)     | **5.55**          | **93.0%**     |
+| NumPy (CPU)    | 7.79              | 97.2%         |
+| Keras (CPU)    | 25.12             | 97.3%         |
+
+</div> 
+
+---
+
+## 7. Speed-Up Analysis
+
+<div align="center">
+
+| Comparison | Speed-Up |
+|-------------|-----------|
+| GPU vs NumPy (CPU) | **1.40× faster** |
+| GPU vs Keras (CPU) | **4.53× faster** |
+
+</div>
+
+Although the GPU version uses simple SGD and slightly lower accuracy,  
+it demonstrates a clear training time improvement and shows how parallel GPU execution reduces computation time even for a small network.
+
+---
+
+## 8. Discussion and Insights
+
+- **Speed:** GPU parallelism significantly reduces training time by processing matrix operations concurrently.  
+- **Accuracy:** The slight drop in CuPy accuracy (~93%) is due to the fixed SGD learning rate compared to Keras’ adaptive Adam.  
+- **Framework Overhead:** Keras CPU training is slower due to graph execution and Python overhead.  
+- **Scalability:** The GPU advantage grows with larger datasets and deeper architectures.
+
+---
+
+## 9. Conclusion
 
 Training a 3-layer Neural Network for classification, such as on the MNIST dataset, highlights significant performance differences between highly optimized deep learning frameworks (like Keras/TensorFlow) and custom NumPy implementations. The frameworks provide substantial speed-ups (typically 15-20x or more) by leveraging optimized C/C++ backends and BLAS libraries, minimizing Python overhead.
 
@@ -81,3 +149,4 @@ Regarding specific optimizations:
 • **Tiling** is a crucial technique for optimizing matrix multiplication by improving cache locality. While essential for performance, it is transparently handled by the underlying BLAS libraries used by frameworks, making manual implementation in Python generally less efficient than using np.dot.
 
 • **Neighbor-based computations** (stencil operations) are not directly relevant to the fully connected layers of a 3-layer MLP. However, they are a core concept in Convolutional Neural Networks, where they enable efficient local feature extraction in grid-like data such as images.
+
