@@ -1,15 +1,17 @@
 # GPU Programming Assignment 1 - Report
 
 **Course:** GPU Programming  
-**Assignment:** Train a 3-layer Neural Network (NN) for certain accuracy suitable for any classification problem
+**Assignment:** Train a 3-layer Neural Network (NN) for certain accuracy suitable for any classification problem  
+**Github Link:** https://github.com/akula-rajesh/gpu-programming-assignment-1
 
 ## Team Members
 
-| Name                 | Roll Number     |
-| -------------------- | :-------------: |
-| Akula Rajesh         | M25AI1048       |
-| Pradeep Annepu       | M25AI1109       |
-| Anirudh Reddy Aligireddy | M25AI1131 |
+| Name                     | Roll Number |
+| ------------------------ | :---------: |
+| Akula Rajesh             |  M25AI1048  |
+| Pradeep Annepu           |  M25AI1109  |
+| Anirudh Reddy Aligireddy |  M25AI1131  |
+| V Amarendra Chakravarthi |  M25AI1082  |
 
 ---
 
@@ -43,7 +45,6 @@ The **MNIST** (Modified National Institute of Standards and Technology) dataset 
 It contains grayscale images of digits **0 to 9**, each of size **28×28 pixels**.  
 For training efficiency, every image is **flattened to 784 features** and **normalized to [0, 1]**.
 
-
 <div align="center">
   
 | Property | Description |
@@ -65,25 +66,29 @@ These preprocessing steps are exactly what our **NumPy**, **Keras**, and **CuPy*
 To analyze speed and accuracy trade-offs, we implemented the same network in three ways:
 
 ### 4.1 Optimized Framework Implementation (Keras/TensorFlow on CPU)
-- Built using the **TensorFlow Keras Sequential API**.  
-- Uses highly optimized C/C++ and BLAS backends.  
-- Trained with **Adam optimizer** for faster convergence.  
+
+- Built using the **TensorFlow Keras Sequential API**.
+- Uses highly optimized C/C++ and BLAS backends.
+- Trained with **Adam optimizer** for faster convergence.
 - Serves as the **optimized CPU reference implementation**.
 
 ### 4.2 From-Scratch NumPy Implementation (CPU)
-- Manual forward and backward propagation using NumPy matrix operations.  
-- Trained with **SGD** and fixed learning rate.  
+
+- Manual forward and backward propagation using NumPy matrix operations.
+- Trained with **SGD** and fixed learning rate.
 - Provides a **baseline** for understanding computational cost on CPU.
 
 ### 4.3 From-Scratch CuPy Implementation (GPU)
-- GPU-accelerated version of the NumPy model using **CuPy arrays and CUDA**.  
-- All matrix multiplications, activations, and gradients run on GPU.  
-- TensorFlow was pinned to CPU to avoid GPU conflicts.  
+
+- GPU-accelerated version of the NumPy model using **CuPy arrays and CUDA**.
+- All matrix multiplications, activations, and gradients run on GPU.
+- TensorFlow was pinned to CPU to avoid GPU conflicts.
 - Executed on **NVIDIA T4 GPU** in Google Colab.
 
 ---
 
 ## 5. Experimental Setup
+
 <div align="center">
   
 | Parameter | Value |
@@ -101,17 +106,18 @@ To analyze speed and accuracy trade-offs, we implemented the same network in thr
 ---
 
 ## 6. Measured Results
+
 <div align="center">
 
 <!-- cells centered with :---: -->
-  
-| Implementation | Training Time (s) | Test Accuracy |
-|:--------------:|:-----------------:|:-------------:|
-| CuPy (GPU)     | **5.55**          | **93.0%**     |
-| NumPy (CPU)    | 7.79              | 97.2%         |
-| Keras (CPU)    | 25.12             | 97.3%         |
 
-</div> 
+| Implementation | Training Time (s) | Test Accuracy |
+| :------------: | :---------------: | :-----------: |
+|   CuPy (GPU)   |     **5.55**      |   **93.0%**   |
+|  NumPy (CPU)   |       7.79        |     97.2%     |
+|  Keras (CPU)   |       25.12       |     97.3%     |
+
+</div>
 
 ---
 
@@ -119,8 +125,8 @@ To analyze speed and accuracy trade-offs, we implemented the same network in thr
 
 <div align="center">
 
-| Comparison | Speed-Up |
-|-------------|-----------|
+| Comparison         | Speed-Up         |
+| ------------------ | ---------------- |
 | GPU vs NumPy (CPU) | **1.40× faster** |
 | GPU vs Keras (CPU) | **4.53× faster** |
 
@@ -133,9 +139,9 @@ it demonstrates a clear training time improvement and shows how parallel GPU exe
 
 ## 8. Discussion and Insights
 
-- **Speed:** GPU parallelism significantly reduces training time by processing matrix operations concurrently.  
-- **Accuracy:** The slight drop in CuPy accuracy (~93%) is due to the fixed SGD learning rate compared to Keras’ adaptive Adam.  
-- **Framework Overhead:** Keras CPU training is slower due to graph execution and Python overhead.  
+- **Speed:** GPU parallelism significantly reduces training time by processing matrix operations concurrently.
+- **Accuracy:** The slight drop in CuPy accuracy (~93%) is due to the fixed SGD learning rate compared to Keras’ adaptive Adam.
+- **Framework Overhead:** Keras CPU training is slower due to graph execution and Python overhead.
 - **Scalability:** The GPU advantage grows with larger datasets and deeper architectures.
 
 ---
@@ -149,4 +155,3 @@ Regarding specific optimizations:
 • **Tiling** is a crucial technique for optimizing matrix multiplication by improving cache locality. While essential for performance, it is transparently handled by the underlying BLAS libraries used by frameworks, making manual implementation in Python generally less efficient than using np.dot.
 
 • **Neighbor-based computations** (stencil operations) are not directly relevant to the fully connected layers of a 3-layer MLP. However, they are a core concept in Convolutional Neural Networks, where they enable efficient local feature extraction in grid-like data such as images.
-
